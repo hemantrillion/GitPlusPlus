@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-utils/schema.json",
+  "productName": "Git++",
+  "version": "1.0.0",
+  "identifier": "com.gitplusplus.desktop",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Git++ Local-First Git Manager (Windows 11)",
+        "width": 1280,
+        "height": 820,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "publisher": "GitPlusPlus Software",
+    "copyright": "Copyright © 2026 Git++ Team",
+    "category": "DeveloperTool",
+    "shortDescription": "Local-first Git Management Desktop Application for Windows 11",
+    "longDescription": "High-performance Git desktop manager for Windows 11 featuring .branch-id identity enforcement, GitHub and GitLab synchronization, and essential files tracking.",
+    "resources": [
+      "WebView2Loader.dll"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false,
+        "installerIcon": "icons/icon.ico"
+      }
+    }
+  }
+}
