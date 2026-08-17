@@ -368,22 +368,40 @@ export async function remoteRenameBranch(auth, repoName, oldBranch, newBranch) {
   }
 }
 
-export async function remoteCreateBranch(auth, repoName, newBranch, parentBranch = 'main') {
+export async function remoteCreateBranch(auth, repoName, newBranch, parentBranch = 'main', targetOwner = null) {
   if (auth.githubConnected && auth.githubToken) {
     try {
-      const userRes = await fetch('https://api.github.com/user', {
-        headers: { 'Authorization': `Bearer ${auth.githubToken.trim()}`, 'User-Agent': 'GitPlusPlus-App' }
-      });
-      if (userRes.ok) {
-        const userData = await userRes.json();
-        const owner = userData.login;
-        const refRes = await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/ref/heads/${parentBranch}`, {
+      let owner = targetOwner;
+      if (!owner) {
+        const userRes = await fetch('https://api.github.com/user', {
           headers: { 'Authorization': `Bearer ${auth.githubToken.trim()}`, 'User-Agent': 'GitPlusPlus-App' }
         });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          owner = userData.login;
+        }
+      }
+
+      if (owner) {
+        let refRes = await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/ref/heads/${parentBranch}`, {
+          headers: { 'Authorization': `Bearer ${auth.githubToken.trim()}`, 'User-Agent': 'GitPlusPlus-App' }
+        });
+
+        if (!refRes.ok) {
+          refRes = await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/ref/heads/main`, {
+            headers: { 'Authorization': `Bearer ${auth.githubToken.trim()}`, 'User-Agent': 'GitPlusPlus-App' }
+          });
+        }
+        if (!refRes.ok) {
+          refRes = await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/ref/heads/master`, {
+            headers: { 'Authorization': `Bearer ${auth.githubToken.trim()}`, 'User-Agent': 'GitPlusPlus-App' }
+          });
+        }
+
         if (refRes.ok) {
           const refData = await refRes.json();
           const sha = refData.object.sha;
-          await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/refs`, {
+          const createRes = await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/refs`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${auth.githubToken.trim()}`,
@@ -392,12 +410,14 @@ export async function remoteCreateBranch(auth, repoName, newBranch, parentBranch
             },
             body: JSON.stringify({ ref: `refs/heads/${newBranch}`, sha })
           });
+          return createRes.ok;
         }
       }
     } catch (e) {
       console.error('Remote create branch error:', e);
     }
   }
+  return false;
 }
 
 export async function remoteMergeBranch(auth, repoName, sourceBranch, targetBranch) {

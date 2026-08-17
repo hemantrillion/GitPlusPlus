@@ -343,7 +343,7 @@ export default function App() {
   const handleCreateBranch = async (branchName, parentBranchName, reason) => {
     if (!activeRepo) return;
     setToastMessage(`Creating branch '${branchName}' on GitHub...`);
-    await remoteCreateBranch(auth, activeRepo.name, branchName, parentBranchName);
+    await remoteCreateBranch(auth, activeRepo.name, branchName, parentBranchName, activeRepo.owner);
 
     const parentBranch = activeRepo.branches.find(b => b.name === parentBranchName) || activeRepo.branches[0];
     const initialJournal = appendProgressJournal(
@@ -367,9 +367,16 @@ export default function App() {
       filesTree: JSON.parse(JSON.stringify(parentBranch.filesTree || []))
     };
 
+    // Live Sync to GitHub Remote website
+    if (activeRepo.owner && auth.githubToken) {
+      for (const [fName, fContent] of Object.entries(newBranch.essentialFiles)) {
+        await remoteUploadFileToGitHub(auth, activeRepo.owner, activeRepo.name, branchName, fName, fContent);
+      }
+    }
+
     const updatedBranches = [...activeRepo.branches, newBranch];
     setRepos(repos.map(r => r.id === activeRepo.id ? { ...r, activeBranch: branchName, branches: updatedBranches } : r));
-    setToastMessage(`Created & synced branch '${branchName}'.`);
+    setToastMessage(`Created & synced branch '${branchName}' live to GitHub website.`);
   };
 
   const handleMergeBranch = async (sourceBranchName, targetBranchName) => {
